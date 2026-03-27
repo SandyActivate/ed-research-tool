@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ED.gov Research Assistant</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6fa; color: #1a1a2e; min-height: 100vh; padding: 2rem 1rem; }
+.wrap { max-width: 780px; margin: 0 auto; }
+.header { display: flex; align-items: center; gap: 0.75rem; border-bottom: 2px solid #1a56b0; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+.badge { background: #1a56b0; color: #fff; font-weight: 700; font-size: 1rem; padding: 0.4rem 0.75rem; border-radius: 8px; letter-spacing: 1px; }
+.header h1 { font-size: 1.15rem; font-weight: 700; margin: 0; }
+.header p { font-size: 0.8rem; color: #666; margin: 0; }
+.card { background: #fff; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid #dde2ea; }
+.field-label { display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: #333; }
+textarea { width: 100%; padding: 0.7rem; border: 1.5px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 0.95rem; background: #fafafa; color: #1a1a2e; outline: none; display: block; resize: vertical; min-height: 100px; }
+textarea:focus { border-color: #1a56b0; background: #fff; }
+.hint { font-size: 0.75rem; color: #888; margin-top: 0.3rem; }
+.btn-row { display: flex; gap: 0.6rem; margin-top: 0.85rem; align-items: center; flex-wrap: wrap; }
+.btn-blue { border: none; border-radius: 8px; padding: 0.65rem 1.4rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; background: #1a56b0; color: #fff; }
+.btn-blue:hover { background: #154a96; }
+.btn-blue:disabled { background: #93a8c9; cursor: not-allowed; }
+.btn-red { background: transparent; border: 1.5px solid #c00; color: #c00; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.btn-ghost { background: transparent; border: 1px solid #ccc; color: #444; border-radius: 6px; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; }
+.btn-ghost:hover { background: #f0f0f0; }
+.progress-box { background: #eef3fb; border: 1px solid #c2d3ee; border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 1rem; display: none; }
+.prog-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.prog-bg { flex: 1; height: 5px; background: #c2d3ee; border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; background: #1a56b0; border-radius: 4px; width: 0%; transition: width 0.8s ease; }
+.prog-status { font-size: 0.85rem; color: #1a56b0; font-weight: 600; }
+.error-box { background: #fff0f0; border: 1px solid #f5c2c2; border-radius: 8px; padding: 0.75rem; color: #b00; font-size: 0.9rem; margin-bottom: 1rem; display: none; }
+.result-section { display: none; }
+.section-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 0.5rem; }
+.response-box { background: #f8f9fb; border: 1px solid #dde2ea; border-radius: 10px; padding: 1.25rem; font-size: 0.93rem; line-height: 1.7; }
+.response-box h2, .response-box h3 { font-size: 1rem; margin: 0.8rem 0 0.3rem; color: #1a1a2e; }
+.response-box p { margin: 0.35rem 0; }
+.response-box ul { margin-left: 1.3rem; margin-top: 0.3rem; }
+.response-box li { margin-bottom: 0.3rem; }
+.response-box a { color: #1a56b0; word-break: break-all; }
+.sources-wrap { margin-top: 1rem; }
+.src-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 0.4rem; }
+.src-link { display: block; font-size: 0.83rem; color: #1a56b0; text-decoration: underline; word-break: break-all; margin-bottom: 0.25rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="badge">ED</div>
+    <div>
+      <h1>ED.gov Research Assistant</h1>
+      <p>Searches ed.gov and nces.ed.gov for authoritative answers</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="field-label">Your Question</label>
+    <textarea id="question" placeholder="e.g. When will the NPSAS:24 data be released?"></textarea>
+    <p class="hint">Ctrl+Enter to submit</p>
+    <div class="btn-row">
+      <button class="btn-blue" id="submitBtn">Search ED.gov</button>
+      <button class="btn-red" id="cancelBtn" style="display:none">Cancel</button>
+    </div>
+  </div>
+
+  <div class="progress-box" id="progressBox">
+    <div class="prog-row">
+      <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+      <span id="elapsedLbl" style="font-size:0.78rem;color:#888;white-space:nowrap">0s</span>
+    </div>
+    <div class="prog-status" id="progStatus"></div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result-section" id="resultSection">
+    <div class="section-label">Response</div>
+    <div class="response-box" id="responseBox"></div>
+    <div class="sources-wrap" id="sourcesBox"></div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn-ghost" id="resetBtn">&#8617; New Question</button>
+    </div>
+  </div>
+
+</div>
+<script>
+(function () {
+  var abortCtrl = null;
+  var tickInterval = null;
+  var seconds = 0;
+
+  var questionEl    = document.getElementById("question");
+  var submitBtn     = document.getElementById("submitBtn");
+  var cancelBtn     = document.getElementById("cancelBtn");
+  var resetBtn      = document.getElementById("resetBtn");
+  var progressBox   = document.getElementById("progressBox");
+  var progFill      = document.getElementById("progFill");
+  var progStatus    = document.getElementById("progStatus");
+  var elapsedLbl    = document.getElementById("elapsedLbl");
+  var errorBox      = document.getElementById("errorBox");
+  var resultSection = document.getElementById("resultSection");
+  var responseBox   = document.getElementById("responseBox");
+  var sourcesBox    = document.getElementById("sourcesBox");
+
+  questionEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.ctrlKey) { startSearch(); }
+  });
+
+  submitBtn.addEventListener("click", startSearch);
+  cancelBtn.addEventListener("click", doCancel);
+  resetBtn.addEventListener("click", doReset);
+
+  function setStatus(msg) { progStatus.textContent = msg; }
+  function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
+
+  function startTick() {
+    seconds = 0;
+    clearInterval(tickInterval);
+    tickInterval = setInterval(function () {
+      seconds++;
+      elapsedLbl.textContent = seconds + "s";
+      var pct = seconds >= 45 ? 95 : Math.floor((seconds / 45) * 100);
+      progFill.style.width = pct + "%";
+    }, 1000);
+  }
+
+  function stopTick() { clearInterval(tickInterval); }
+
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    cancelBtn.style.display = on ? "inline-block" : "none";
+    progressBox.style.display = on ? "block" : "none";
+  }
+
+  function doCancel() {
+    if (abortCtrl) { abortCtrl.abort(); }
+    stopTick();
+    setLoading(false);
+    setStatus("Cancelled.");
+    progressBox.style.display = "block";
+  }
+
+  function doReset() {
+    questionEl.value = "";
+    errorBox.style.display = "none";
+    resultSection.style.display = "none";
+    progressBox.style.display = "none";
+    progFill.style.width = "0%";
+    elapsedLbl.textContent = "0s";
+    progStatus.textContent = "";
+  }
+
+  function startSearch() {
+    var q = questionEl.value.trim();
+    if (!q) { showError("Please enter a question."); return; }
+
+    errorBox.style.display = "none";
+    resultSection.style.display = "none";
+    setLoading(true);
+    startTick();
+
+    abortCtrl = new AbortController();
+    var msgs = [{ role: "user", content: "Search ed.gov and nces.ed.gov to answer: " + q }];
+    var sys = "You are a knowledgeable assistant specializing in U.S. Department of Education programs, data, and policy. Use your web search tool to search ed.gov and nces.ed.gov for current, authoritative information. Cite specific URLs from ed.gov in your response. Be professional and thorough.";
+
+    runRound(sys, msgs, 0, "");
+  }
+
+  function runRound(sys, msgs, round, accumulated) {
+    var r = round + 1;
+    setStatus(r === 1 ? "Querying API with web search..." : "Processing results (round " + r + ")...");
+
+    fetch("/.netlify/functions/proxy", {
+      method: "POST",
+      signal: abortCtrl.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: sys, messages: msgs })
+    })
+    .then(function (res) {
+      if (!res.ok) {
+        return res.json().then(function (d) {
+          throw new Error((d && d.error) ? d.error : ("HTTP " + res.status));
+        });
+      }
+      return res.json();
+    })
+    .then(function (data) {
+      var toolBlocks = [];
+      var text = accumulated;
+      var i, b;
+      for (i = 0; i < data.content.length; i++) {
+        b = data.content[i];
+        if (b.type === "text") { text = text + b.text; }
+        if (b.type === "tool_use") { toolBlocks.push(b); }
+      }
+
+      if (toolBlocks.length === 0 || data.stop_reason === "end_turn" || r >= 6) {
+        stopTick();
+        setLoading(false);
+        setStatus("Done!");
+        progressBox.style.display = "block";
+        renderResult(text);
+        return;
+      }
+
+      setStatus("Searching the web...");
+      msgs.push({ role: "assistant", content: data.content });
+
+      var results = [];
+      for (i = 0; i < toolBlocks.length; i++) {
+        var tu = toolBlocks[i];
+        var c = (tu.input && tu.input.query) ? ("Searched: " + tu.input.query) : "Done.";
+        results.push({ type: "tool_result", tool_use_id: tu.id, content: c });
+      }
+      msgs.push({ role: "user", content: results });
+      runRound(sys, msgs, r, text);
+    })
+    .catch(function (err) {
+      stopTick();
+      setLoading(false);
+      if (err.name === "AbortError") { setStatus("Cancelled."); progressBox.style.display = "block"; }
+      else { showError(err.message || "Something went wrong. Please try again."); }
+    });
+  }
+
+  function renderResult(text) {
+    if (!text.trim()) { showError("No response generated. Please try rephrasing your question."); return; }
+    responseBox.innerHTML = toHtml(text);
+    var urls = extractUrls(text);
+    if (urls.length > 0) {
+      var html = "<div class='src-label'>Sources</div>";
+      for (var i = 0; i < urls.length; i++) {
+        html += "<a class='src-link' href='" + urls[i] + "' target='_blank' rel='noopener noreferrer'>" + urls[i] + "</a>";
+      }
+      sourcesBox.innerHTML = html;
+    } else {
+      sourcesBox.innerHTML = "";
+    }
+    resultSection.style.display = "block";
+  }
+
+  function extractUrls(text) {
+    var words = text.split(/[ \n\t]+/);
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i].replace(/[.,;:)>\]"']+$/, "");
+      if (w.indexOf("http") === 0 && w.indexOf("ed.gov") !== -1 && !seen[w]) {
+        seen[w] = true;
+        out.push(w);
+      }
+    }
+    return out;
+  }
+
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function linkify(s) {
+    var words = s.split(" ");
+    var out = [];
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      var clean = w.replace(/[.,;:)>\]"']+$/, "");
+      if (clean.indexOf("http") === 0) {
+        out.push("<a href='" + clean + "' target='_blank' rel='noopener noreferrer'>" + clean + "</a>");
+      } else {
+        out.push(esc(w));
+      }
+    }
+    return out.join(" ");
+  }
+
+  function toHtml(text) {
+    var lines = text.split("\n");
+    var html = "";
+    var inList = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.trim() === "") {
+        if (inList) { html += "</ul>"; inList = false; }
+        html += "<br>";
+      } else if (line.indexOf("### ") === 0) {
+        if (inList) { html += "</ul>"; inList = false; }
+        html += "<h3>" + esc(line.substring(4)) + "</h3>";
+      } else if (line.indexOf("## ") === 0) {
+        if (inList) { html += "</ul>"; inList = false; }
+        html += "<h3>" + esc(line.substring(3)) + "</h3>";
+      } else if (line.indexOf("# ") === 0) {
+        if (inList) { html += "</ul>"; inList = false; }
+        html += "<h3>" + esc(line.substring(2)) + "</h3>";
+      } else if (line.indexOf("- ") === 0 || line.indexOf("* ") === 0) {
+        if (!inList) { html += "<ul>"; inList = true; }
+        html += "<li>" + linkify(line.substring(2)) + "</li>";
+      } else {
+        if (inList) { html += "</ul>"; inList = false; }
+        html += "<p>" + linkify(line) + "</p>";
+      }
+    }
+    if (inList) { html += "</ul>"; }
+    return html;
+  }
+
+}());
+</script>
+</body>
+</html>
